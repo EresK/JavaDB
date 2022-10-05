@@ -2,7 +2,7 @@ package Task8;
 
 public class Main {
     public static void main(String[] args) {
-        int threads_number = 8;
+        int threads_number = 2;
 
         try {
             threads_number = args.length > 0 ? Integer.parseInt(args[0]) : threads_number;
@@ -10,13 +10,13 @@ public class Main {
             System.err.println(e.getMessage());
         }
 
-        LeibnizSeriesBarrier series = new LeibnizSeriesBarrier(threads_number);
+        LeibnizSeries series = new LeibnizSeries(threads_number);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Signal caught");
 
             double res = series.CancelCalculation();
-            System.out.println(res);
+            System.out.println("Result: " + res);
         }));
 
         series.Pi();
