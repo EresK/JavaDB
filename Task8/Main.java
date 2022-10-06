@@ -1,7 +1,7 @@
 package Task8;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         int threads_number = 2;
 
         try {

@@ -3,19 +3,19 @@ package Task8;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class PartOfLeibnizSeries implements Callable<Double> {
     private final int startIndex;
     private final int stepOverIndexes;
     private final CyclicBarrier barrier;
     private final AtomicBoolean isCanceled;
-    private final AtomicReference<Double> theLargestNumberOfIterations;
+    private final AtomicLong theLargestNumberOfIterations;
 
     PartOfLeibnizSeries(int startIndex, int stepOverIndexes,
                         CyclicBarrier barrier,
                         AtomicBoolean isCanceled,
-                        AtomicReference<Double> largestNumberOfIterations) {
+                        AtomicLong largestNumberOfIterations) {
         this.startIndex = startIndex;
         this.stepOverIndexes = stepOverIndexes;
 
@@ -29,20 +29,24 @@ public class PartOfLeibnizSeries implements Callable<Double> {
         double sum = 0;
         int sign = (startIndex % 2 == 0) ? 1 : -1;
         double nIndex = startIndex;
-        double iteration = 0.0;
+        long iteration = Long.MIN_VALUE;
 
         // just calculation
         while (!isCanceled.get()) {
             sum = sum + sign * (4.0 / (2.0 * nIndex + 1.0));
             sign = (stepOverIndexes % 2 == 0) ? sign : -sign;
             nIndex += stepOverIndexes;
-            iteration += 1.0;
+
+            if (iteration < Long.MAX_VALUE)
+                iteration++;
         }
 
         // minimization of error
         // finding maximum of iterations
-        if (iteration > theLargestNumberOfIterations.get())
-            theLargestNumberOfIterations.set(iteration);
+        synchronized (theLargestNumberOfIterations) {
+            if (iteration > theLargestNumberOfIterations.get())
+                theLargestNumberOfIterations.set(iteration);
+        }
 
         // await while other threads check and/or set the largest number of iterations over all threads
         try {
@@ -56,7 +60,7 @@ public class PartOfLeibnizSeries implements Callable<Double> {
             sum = sum + sign * (4.0 / (2.0 * nIndex + 1.0));
             sign = (stepOverIndexes % 2 == 0) ? sign : -sign;
             nIndex += stepOverIndexes;
-            iteration += 1.0;
+            iteration++;
         }
 
         return sum;

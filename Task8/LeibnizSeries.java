@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class LeibnizSeries {
     private final int threadsNumber;
@@ -15,7 +15,7 @@ public class LeibnizSeries {
 
     private final CyclicBarrier barrier;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
-    private final AtomicReference<Double> theLargestNumberOfIterationsOfThread;
+    private final AtomicLong theLargestNumberOfIterationsOfThread;
 
     LeibnizSeries(int threadsNumber) {
         this.threadsNumber = threadsNumber > 0 ? threadsNumber : 2;
@@ -23,7 +23,7 @@ public class LeibnizSeries {
 
         futures = new ArrayList<>();
         barrier = new CyclicBarrier(threadsNumber);
-        theLargestNumberOfIterationsOfThread = new AtomicReference<>(0.0);
+        theLargestNumberOfIterationsOfThread = new AtomicLong(Long.MIN_VALUE);
     }
 
     public void Pi() {
