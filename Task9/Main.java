@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         DiningPhilosophers philosophers = new DiningPhilosophers();
 
-        Thread.sleep(5000);
+        Thread.sleep(1000);
 
         philosophers.CancelSimulation();
     }

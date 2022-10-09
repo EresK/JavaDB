@@ -24,33 +24,25 @@ public class Philosopher implements Runnable {
         while (!isCanceled.get()) {
             // thinking
             try {
-                System.out.println("Philosopher: " + philosopherID + " is thinking");
-
-                Thread.sleep(random.nextInt(10));
+                System.out.println("Philosopher " + philosopherID + " is thinking");
+                Thread.sleep(random.nextInt(10, 500));
             }
             catch (InterruptedException e) {
-                System.out.println(e.getMessage());
+                System.err.println(e.getMessage());
             }
 
-            // eating
+            // having a dinner
             // if philosopherID != 0 then forkOne is left fork and forkTwo is right
             // else vise versa
             forkOne = (philosopherID == 0) ? forks.get(philosopherID) : forks.get(philosopherID - 1);
             forkTwo = (philosopherID == 0) ? forks.get(forks.size() - 1) : forks.get(philosopherID);
 
-            int debugForkOneID = (philosopherID == 0) ? philosopherID : philosopherID - 1;
-            int debugForkTwoID = (philosopherID == 0) ? forks.size() - 1 : philosopherID;
-
-            System.out.println("Philosopher: " + philosopherID + " try to get forks");
-
             try {
                 forkOne.lock();
                 forkTwo.lock();
 
-                System.out.println("Philosopher: " + philosopherID + " is eating, " +
-                        debugForkOneID + " " + debugForkTwoID);
-
-                Thread.sleep(random.nextInt(2000));
+                System.out.println("Philosopher " + philosopherID + " having dinner");
+                Thread.sleep(random.nextInt(10, 500));
             }
             catch (InterruptedException e) {
                 System.err.println(e.getMessage());
@@ -60,9 +52,9 @@ public class Philosopher implements Runnable {
                     forkOne.unlock();
                 if (forkTwo.isHeldByCurrentThread())
                     forkTwo.unlock();
-            }
 
-            System.out.println("Philosopher: " + philosopherID + " finished");
+                System.out.println("Philosopher " + philosopherID + " finished");
+            }
         }
     }
 }
