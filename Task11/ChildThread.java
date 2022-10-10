@@ -25,5 +25,9 @@ public class ChildThread implements Runnable {
         catch (InterruptedException e) {
             System.err.println(e.getMessage());
         }
+        finally {
+            s1.release();
+            s2.release();
+        }
     }
 }
