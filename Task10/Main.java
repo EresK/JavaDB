@@ -14,8 +14,10 @@ public class Main {
 
             new Thread(new ChildThread(lock1, lock2, lock3)).start();
 
-            while (!lock3.isLocked()) {
-                Thread.yield();
+            synchronized (lock3) {
+                while (!lock3.isLocked()) {
+                    lock3.wait();
+                }
             }
 
             for (int i = 0; i < 10; i++) {
@@ -29,7 +31,11 @@ public class Main {
                 lock2.lock();
                 lock3.unlock();
             }
-        } finally {
+        }
+        catch (InterruptedException e) {
+            System.err.println(e.getMessage());
+        }
+        finally {
             if (lock1.isHeldByCurrentThread()) lock1.unlock();
             if (lock2.isHeldByCurrentThread()) lock2.unlock();
             if (lock3.isHeldByCurrentThread()) lock3.unlock();

@@ -17,6 +17,11 @@ public class ChildThread implements Runnable {
     public void run() {
         try {
             lock3.lock();
+
+            synchronized (lock3) {
+                lock3.notify();
+            }
+
             lock2.lock();
             lock3.unlock();
             for (int i = 0; i < 10; i++) {
@@ -30,7 +35,8 @@ public class ChildThread implements Runnable {
                 lock2.lock();
                 lock3.unlock();
             }
-        } finally {
+        }
+        finally {
             if (lock1.isHeldByCurrentThread()) lock1.unlock();
             if (lock2.isHeldByCurrentThread()) lock2.unlock();
             if (lock3.isHeldByCurrentThread()) lock3.unlock();
