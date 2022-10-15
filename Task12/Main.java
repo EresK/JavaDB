@@ -7,8 +7,7 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
-        ArrayList<String> list = new ArrayList<>();
+        List<String> list = new LinkedList<>();
 
         ChildThread childThread = new ChildThread(list, new AtomicBoolean(false));
         new Thread(childThread).start();
@@ -17,10 +16,14 @@ public class Main {
             String line = scanner.nextLine();
 
             if (line.equals("")) {
-                System.out.println(list);
+                synchronized (list) {
+                    System.out.println(list);
+                }
             }
             else if (line.equals("/exit")) {
-                System.out.println(list);
+                synchronized (list) {
+                    System.out.println(list);
+                }
                 childThread.cancel();
                 break;
             }

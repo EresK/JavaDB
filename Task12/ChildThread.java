@@ -30,7 +30,7 @@ public class ChildThread implements Runnable {
         isCanceled.set(true);
     }
 
-    private synchronized void sort(List<String> list) {
+    private void sort(List<String> list) {
         synchronized (list) {
             boolean wasSwapped = true;
             int lastIndex = list.size();
