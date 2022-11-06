@@ -19,7 +19,6 @@
 (defn cat-n [n alpha]
   (cond
     (<= n 1) alpha
-    (> n (count alpha)) '()
     :default  (reduce (fn [sq _] (cat-apply sq alpha)) alpha (range (dec n)))))
 
 (def alphabet '("a" "b" "c" "d"))
