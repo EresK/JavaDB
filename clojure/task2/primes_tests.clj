@@ -1,5 +1,5 @@
 (ns task2.primes-tests
-  (:use task2.primes)
+  (:use task2.primesWithNaturals)
   (:require [clojure.test :as test]))
 
 (test/deftest unittests
