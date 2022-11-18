@@ -12,8 +12,8 @@
                         (fn [x] (not-multiple? x (first s)))
                         (rest s))))))
 
-(defn primes []
+(def primes
   (primes-seq (iterate inc 2)))
 
-(println (time (take 1000 (primes))))
-(println (time (take 1100 (primes))))
+;(println (time (take 1000 primes)))
+;(println (time (take 1100 primes)))
