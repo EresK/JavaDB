@@ -4,12 +4,6 @@
   (Thread/sleep 1)
   (odd? n))
 
-(defn p-filter-1 [pred coll]
-  (let [chunk-size (int (Math/ceil (Math/sqrt (count coll)))),
-        parts (partition-all chunk-size coll)]
-    (->> (pmap (partial (fn [p] (filter pred p))) parts)
-         (reduce concat))))
-
 (defn p-filter-2 [pred coll]
   (let [chunk-size (int (Math/ceil (Math/sqrt (count coll)))),
         parts (partition-all chunk-size coll)]
@@ -23,10 +17,8 @@
 
 (println "odd?")
 (time (nth (filter odd? (range 1 upper-bound)) (- (/ upper-bound 2) 1)))
-(time (p-filter-1 odd? (range 1 upper-bound)))
 (time (p-filter-2 odd? (range 1 upper-bound)))
 
 (println "heavy-odd?")
 (time (nth (filter heavy-odd? (range 1 upper-bound)) (- (/ upper-bound 2) 1)))
-(time (p-filter-1 heavy-odd? (range 1 upper-bound)))
 (time (p-filter-2 heavy-odd? (range 1 upper-bound)))
