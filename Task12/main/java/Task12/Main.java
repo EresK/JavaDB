@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        MyVector<String> vector = new MyVector<>();
+        MyList<String> list = new MyList<>();
 
-        ChildThread childThread = new ChildThread(vector, new AtomicBoolean(false));
+        ChildThread childThread = new ChildThread(list, new AtomicBoolean(false));
         new Thread(childThread).start();
 
         boolean continueAdd = true;
@@ -18,25 +18,25 @@ public class Main {
 
             switch (line) {
                 case "":
-                    printVector(vector);
+                    printList(list);
                     break;
                 case "--exit":
-                    printVector(vector);
+                    printList(list);
                     continueAdd = false;
                     break;
                 default:
-                    addToVector(vector, line);
+                    addToList(list, line);
             }
         }
 
         childThread.cancel();
     }
 
-    private synchronized static void printVector(MyVector<String> vector) {
-        System.out.println(vector);
+    private synchronized static void printList(MyList<String> list) {
+        System.out.println(list);
     }
 
-    private synchronized static void addToVector(MyVector<String> vector, String line) {
-        vector.add(line);
+    private synchronized static void addToList(MyList<String> list, String line) {
+        list.add(line);
     }
 }

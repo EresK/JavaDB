@@ -3,11 +3,11 @@ package Task12;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChildThread implements Runnable {
-    private final MyVector<String> vector;
+    private final MyList<String> list;
     private final AtomicBoolean isCanceled;
 
-    public ChildThread(MyVector<String> vector, AtomicBoolean isCanceled) {
-        this.vector = vector;
+    public ChildThread(MyList<String> list, AtomicBoolean isCanceled) {
+        this.list = list;
         this.isCanceled = isCanceled;
     }
 
@@ -16,7 +16,7 @@ public class ChildThread implements Runnable {
         while (!isCanceled.get()) {
             try {
                 Thread.sleep(5000);
-                vector.sort();
+                list.sort();
             }
             catch (InterruptedException e) {
                 System.err.println(e.getMessage());
