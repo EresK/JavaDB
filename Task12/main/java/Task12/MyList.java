@@ -1,10 +1,15 @@
 package Task12;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class MyList<T extends Comparable<T>> {
     private int size;
     private Node<T> head;
+    private final Lock mutex = new ReentrantLock();
 
-    public MyList() {}
+    public MyList() {
+    }
 
     public MyList(Iterable<T> items) {
         Node<T> node = null;
@@ -30,119 +35,153 @@ public class MyList<T extends Comparable<T>> {
         if (item == null)
             throw new NullPointerException("item can not be null");
 
-        if (head == null) {
-            head = new Node<>(item);
-        }
-        else {
-            Node<T> node = head;
-
-            while (node.hasNext()) {
-                node = node.getNext();
+        mutex.lock();
+        try {
+            if (head == null) {
+                head = new Node<>(item);
             }
+            else {
+                Node<T> node = head;
 
-            node.setNext(new Node<>(item));
+                while (node.hasNext()) {
+                    node = node.getNext();
+                }
+
+                node.setNext(new Node<>(item));
+            }
+            size += 1;
         }
-        size += 1;
+        finally {
+            mutex.unlock();
+        }
     }
 
     public T get(int index) {
         if (index < 0 || index >= size)
             throw new IllegalArgumentException("index should be in range [0, size)");
 
-        Node<T> node = head;
+        mutex.lock();
+        try {
+            Node<T> node = head;
 
-        for (int i = 0; i < index; i++) {
-            node = node.getNext();
+            for (int i = 0; i < index; i++)
+                node = node.getNext();
+
+            return node.getValue();
         }
-
-        return node.getValue();
+        finally {
+            mutex.unlock();
+        }
     }
 
     public T pop(int index) {
         if (index < 0 || index >= size)
             throw new IllegalArgumentException("index should be in range [0, size)");
 
-        T item;
+        mutex.lock();
+        try {
+            T item;
 
-        if (index == 0) {
-            item = head.getValue();
-            head = head.hasNext() ? head.getNext() : null;
-        }
-        else {
-            Node<T> node = head;
-            Node<T> prev = head;
-
-            for (int i = 0; i < index; i++) {
-                prev = node;
-                node = node.getNext();
+            if (index == 0) {
+                item = head.getValue();
+                head = head.hasNext() ? head.getNext() : null;
             }
-            prev.setNext(node.hasNext() ? node.getNext() : null);
+            else {
+                Node<T> node = head;
+                Node<T> prev = head;
 
-            item = node.getValue();
+                for (int i = 0; i < index; i++) {
+                    prev = node;
+                    node = node.getNext();
+                }
+                prev.setNext(node.hasNext() ? node.getNext() : null);
+
+                item = node.getValue();
+            }
+            size -= 1;
+
+            return item;
         }
-        size -= 1;
-
-        return item;
+        finally {
+            mutex.unlock();
+        }
     }
 
     public void set(T item, int index) {
         if (index < 0 || index >= size)
             throw new IllegalArgumentException("index should be in range [0, size)");
 
-        Node<T> node = head;
+        mutex.lock();
+        try {
+            Node<T> node = head;
 
-        for (int i = 0; i < index; i++) {
-            node = node.getNext();
+            for (int i = 0; i < index; i++)
+                node = node.getNext();
+
+            node.setValue(item);
         }
-
-        node.setValue(item);
+        finally {
+            mutex.unlock();
+        }
     }
 
     public void sort() {
         if (size < 1)
             return;
 
-        Node<T> curr;
-        Node<T> next;
-        int lastIndex = size;
-        boolean swapped = true;
+        mutex.lock();
+        try {
+            Node<T> curr;
+            Node<T> next;
+            int lastIndex = size;
+            boolean swapped = true;
 
-        while (swapped) {
-            swapped = false;
-            curr = head;
+            while (swapped) {
+                swapped = false;
+                curr = head;
 
-            for (int i = 0; i < lastIndex - 1; i++) {
-                if (curr.hasNext()) {
-                    next = curr.getNext();
+                for (int i = 0; i < lastIndex - 1; i++) {
+                    if (curr.hasNext()) {
+                        next = curr.getNext();
 
-                    if (curr.getValue().compareTo(next.getValue()) > 0) {
-                        T tmp = curr.getValue();
-                        curr.setValue(next.getValue());
-                        next.setValue(tmp);
-                        swapped = true;
+                        if (curr.getValue().compareTo(next.getValue()) > 0) {
+                            T tmp = curr.getValue();
+                            curr.setValue(next.getValue());
+                            next.setValue(tmp);
+                            swapped = true;
+                        }
+
+                        curr = next;
                     }
-
-                    curr = next;
                 }
+                lastIndex -= 1;
             }
-            lastIndex -= 1;
+        }
+        finally {
+            mutex.unlock();
         }
     }
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("");
+        mutex.lock();
+        try {
+            StringBuilder builder = new StringBuilder("");
 
-        if (head != null) {
-            Node<T> node = head;
+            if (head != null) {
+                Node<T> node = head;
 
-            while (node.hasNext()) {
-                builder.append(node.getValue()).append(" ");
-                node = node.getNext();
+                while (node.hasNext()) {
+                    builder.append(node.getValue()).append(" ");
+                    node = node.getNext();
+                }
+                builder.append(node.getValue());
             }
-            builder.append(node.getValue());
-        }
 
-        return builder.toString();
+            return builder.toString();
+        }
+        finally {
+            mutex.unlock();
+        }
     }
 }
