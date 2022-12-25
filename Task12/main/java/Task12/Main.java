@@ -32,11 +32,11 @@ public class Main {
         childThread.cancel();
     }
 
-    private synchronized static void printList(MyList<String> list) {
+    private static void printList(MyList<String> list) {
         System.out.println(list);
     }
 
-    private synchronized static void addToList(MyList<String> list, String line) {
+    private static void addToList(MyList<String> list, String line) {
         list.add(line);
     }
 }
