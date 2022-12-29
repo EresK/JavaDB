@@ -213,39 +213,32 @@ public class Person {
     }
 
     public void lightMerge(@NonNull Person person) {
-        if (person == this) return;
-
         if (this.id == null || person.id == null || !this.id.equals(person.id)) {
-            System.out.println(this);
-            System.out.println(person);
-            throw new Error("Incorrect id");
+            System.err.println(this);
+            System.err.println(person);
+            throw new IllegalStateException("Incorrect id");
         }
 
-        if (person.firstName != null) {
+        if (person.firstName != null)
             this.setFirstName(person.firstName);
-        }
 
-        if (person.lastName != null) {
+        if (person.lastName != null)
             this.setLastName(person.lastName);
-        }
 
-        if (person.gender != null) {
+        if (person.gender != null)
             this.setGender(person.gender);
-        }
 
-        if (person.childrenNumber != null) {
+        if (person.childrenNumber != null)
             this.setChildrenNumber(person.childrenNumber);
-        }
 
-        if (person.siblingsNumber != null) {
+        if (person.siblingsNumber != null)
             this.setSiblingsNumber(person.siblingsNumber);
-        }
     }
 
     public void mergePerson(@NonNull Person person) {
-        lightMerge(person);
-
         if (person == this) return;
+
+        lightMerge(person);
 
         if (person.spouse != null) {
             this.spouse = person.spouse;

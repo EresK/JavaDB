@@ -11,14 +11,16 @@ public class Main {
         String outFilename = "src/main/resources/ready.txt";
 
         ParserXML parserXML = new ParserXML();
-        PersonRelationMerger merger = new PersonRelationMerger();
+        PersonRelationMerger relationMerger = new PersonRelationMerger();
 
-        List<Person> people = parserXML.parseXMLFile(filename);
+        List<Person> personList = parserXML.parseXMLFile(filename);
 
-        people = merger.merge(people);
+        System.out.println("Parsed persons: " + personList.size());
 
-        // writePersons(people, outFilename);
-        printPersons(people);
+        personList = relationMerger.merge(personList);
+
+//        writePersons(personList, outFilename);
+//        printPersons(personList);
     }
 
     private static void writePersons(List<Person> people, String outFilename) {

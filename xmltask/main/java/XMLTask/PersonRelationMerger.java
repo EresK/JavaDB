@@ -3,18 +3,18 @@ package XMLTask;
 import java.util.*;
 
 public class PersonRelationMerger {
-    private final Map<String, Person> peopleWithId = new HashMap<>();
+    private final Map<String, Person> peopleWithID = new HashMap<>();
     private final Map<String, Set<String>> idsByName = new HashMap<>();
     private final Map<String, Set<Person>> peopleWithoutID = new HashMap<>();
 
     public List<Person> merge(List<Person> people) {
-        List<Person> personList = handleRelations(people);
+        List<Person> personsHandled = handleRelations(people);
 
-        List<Person> errors = personList.stream()
-                .filter(p -> !p.isConsistent(peopleWithId))
+        List<Person> errors = personsHandled.stream()
+                .filter(p -> !p.isConsistent(peopleWithID))
                 .toList();
 
-        System.out.println("Persons after handle relations: " + personList.size() + "\n" +
+        System.out.println("Persons after handle relations: " + personsHandled.size() + "\n" +
                 "Errors: " + errors.size());
 
         for (Person problemPerson : errors) {
@@ -31,39 +31,42 @@ public class PersonRelationMerger {
             solveProblem(problemPerson, peopleWithoutId);
         }
 
-        for (Person person : peopleWithId.values()) {
+        for (Person person : peopleWithID.values()) {
             if (person.getSpouse() == null || person.getChildrenNumber() == null) {
                 person.setChildrenNumber(0);
             }
         }
 
-        errors = personList.stream().filter(p ->
-                !p.isConsistent(peopleWithId)).toList();
+        errors = personsHandled.stream().filter(p ->
+                !p.isConsistent(peopleWithID)).toList();
 
         System.out.println("Errors: " + errors.size() + "\n" +
-                "Persons: " + personList.size());
+                "Persons: " + personsHandled.size());
 
-        return personList;
+        return personsHandled;
     }
 
-    private List<Person> handleRelations(List<Person> persons) {
-        for (final Person person : persons) {
+    private List<Person> handleRelations(List<Person> people) {
+        for (Person person : people) {
+            // checking for having id
             final String id = person.getId();
             if (id == null) {
-                Set<Person> personsWithNoId = peopleWithoutID.getOrDefault(person.getFullName(), new HashSet<>());
-                personsWithNoId.add(person);
-                peopleWithoutID.put(person.getFullName(), personsWithNoId);
+                Set<Person> withoutID = peopleWithoutID.getOrDefault(person.getFullName(), new HashSet<>());
+                withoutID.add(person);
+                peopleWithoutID.put(person.getFullName(), withoutID);
                 continue;
             }
 
-            if (peopleWithId.containsKey(id)) {
-                Person collision = peopleWithId.get(id);
+            // merging collisions
+            if (peopleWithID.containsKey(id)) {
+                Person collision = peopleWithID.get(id);
                 person.mergePerson(collision);
             }
-            peopleWithId.put(id, person);
+            peopleWithID.put(id, person);
         }
 
-        for (final Person person : peopleWithId.values()) {
+        // associations several ids by the name
+        for (Person person : peopleWithID.values()) {
             final String name = person.getFullName();
             if (person.getId() == null || name == null) {
                 throw new RuntimeException("Person must have ID and name");
@@ -74,30 +77,26 @@ public class PersonRelationMerger {
             idsByName.put(name, ids);
         }
 
-        List<String> conflicts = new ArrayList<>();
-
-        for (final Person person : persons) {
+        // handling ids conflicts & merging
+        for (Person person : people) {
             final String name = person.getFullName();
-            if (name == null) continue;
+            if (name == null)
+                continue;
 
             final Set<String> ids = idsByName.get(name);
-            final String id = ids.size() == 1 ?
-                    ids.iterator().next() : null;
 
-            if (ids.size() > 1) {
-                conflicts.addAll(ids);
-            }
-
+            final String id = (ids.size() == 1) ? ids.iterator().next() : null;
             if (id != null) {
                 person.setId(id);
-                peopleWithId.get(id).mergePerson(person);
+                peopleWithID.get(id).mergePerson(person);
             }
         }
 
-        for (final Person person : peopleWithId.values()) {
+        // handling related persons
+        for (Person person : peopleWithID.values()) {
             if (person.getSpouse() != null) {
                 final Set<Person> spouseToAdd = new HashSet<>();
-                connectRelatives(spouseToAdd, person.getSpouse());
+                findRelated(spouseToAdd, person.getSpouse());
 
                 if (!spouseToAdd.isEmpty()) {
                     final Person spouse = spouseToAdd.iterator().next();
@@ -107,34 +106,34 @@ public class PersonRelationMerger {
 
             Set<Person> childrenToAdd = new HashSet<>();
             for (final Person child : person.getChildren()) {
-                connectRelatives(childrenToAdd, child);
+                findRelated(childrenToAdd, child);
             }
             person.getChildren().clear();
             childrenToAdd.forEach(person::addChild);
 
             Set<Person> siblingsToAdd = new HashSet<>();
             for (final Person sibling : person.getSiblings()) {
-                connectRelatives(siblingsToAdd, sibling);
+                findRelated(siblingsToAdd, sibling);
             }
             person.getSiblings().clear();
             siblingsToAdd.forEach(person::addSibling);
 
             Set<Person> parentsToAdd = new HashSet<>();
             for (final Person parent : person.getParents()) {
-                connectRelatives(parentsToAdd, parent);
+                findRelated(parentsToAdd, parent);
             }
             person.getParents().clear();
             parentsToAdd.forEach(person::addParent);
         }
 
-        return peopleWithId.values().stream()
+        return peopleWithID.values().stream()
                 .sorted(Comparator.comparing(Person::getId)).toList();
     }
 
-    private void connectRelatives(final Set<Person> peopleToAdd, final Person person) {
+    private void findRelated(final Set<Person> peopleToAdd, final Person person) {
         if (person.getId() != null) {
             final String id = person.getId();
-            peopleToAdd.add(peopleWithId.get(id));
+            peopleToAdd.add(peopleWithID.get(id));
         }
         else if (person.getFullName() != null) {
             final String name = person.getFullName();
@@ -142,7 +141,7 @@ public class PersonRelationMerger {
 
             if (ids.size() == 1) {
                 final String id = ids.iterator().next();
-                peopleToAdd.add(peopleWithId.get(id));
+                peopleToAdd.add(peopleWithID.get(id));
             }
         }
     }
@@ -150,17 +149,23 @@ public class PersonRelationMerger {
     private void solveProblem(Person person, Set<Person> others) {
         if (person.getGender() == null) {
             for (Person other : others) {
+                // set gender by spouse information
                 if (other.getSpouse() != null && Objects.equals(person.getId(), other.getSpouse().getId())) {
-                    if (Objects.equals(other.getSpouse().getGender(), Gender.MALE))
+                    if (Objects.equals(other.getSpouse().getGender(), Gender.MALE)) {
                         person.setGender(Gender.MALE);
-                    else if (Objects.equals(other.getSpouse().getGender(), Gender.FEMALE))
+                        break;
+                    }
+                    else if (Objects.equals(other.getSpouse().getGender(), Gender.FEMALE)) {
                         person.setGender(Gender.FEMALE);
+                        break;
+                    }
+                    else if (other.getGender() != null) {
+                        person.setGender(Gender.reverse(other.getGender()));
+                        break;
+                    }
                 }
-            }
-        }
 
-        if (person.getGender() == null) {
-            for (Person other : others) {
+                // set gender by siblings information
                 for (Person otherSibling : other.getSiblings()) {
                     for (Person personSibling : person.getSiblings()) {
                         if (personSibling.getId().equals(otherSibling.getId())) {
@@ -173,35 +178,18 @@ public class PersonRelationMerger {
             }
         }
 
-        if (person.getGender() == null) {
-            int femaleCount = 0;
-            int maleCount = 0;
-
-            for (Person other : others) {
-                if (other.getGender() != null && other.getGender().equals(Gender.MALE))
-                    maleCount++;
-                if (other.getGender() != null && other.getGender().equals(Gender.FEMALE))
-                    femaleCount++;
-            }
-
-            if (femaleCount == 0 && maleCount > 0)
-                person.setGender(Gender.MALE);
-            if (maleCount == 0 && femaleCount > 0)
-                person.setGender(Gender.FEMALE);
-        }
-
         if (person.getSpouse() == null) {
             for (Person other : others) {
                 if (other.getSpouse() != null && Objects.equals(person.getId(), other.getSpouse().getId())) {
                     person.setSpouse(other);
+
                     if (person.getSpouse().getId() == null) {
                         for (Person innerOther : others) {
-                            if (person.getSpouse() != null &&
-                                    person.getSpouse().getFullName().equals(innerOther.getFullName()) &&
+                            if (person.getSpouse().getFullName().equals(innerOther.getFullName()) &&
                                     innerOther.getSpouse() != null &&
                                     innerOther.getSpouse().getId() != null &&
-                                    !Objects.equals(innerOther.getSpouse().getId(), person.getId())) {
-                                person.setSpouse(peopleWithId.get(innerOther.getSpouse().getId()));
+                                    Objects.equals(innerOther.getSpouse().getId(), person.getId())) {
+                                person.setSpouse(peopleWithID.get(innerOther.getSpouse().getId()));
                             }
                         }
                     }
@@ -210,30 +198,46 @@ public class PersonRelationMerger {
             }
         }
 
+        // find spouse by children information
         if (person.getSpouse() != null && person.getSpouse().getId() == null) {
-            Set<String> spouses = idsByName.get(person.getSpouse().getFullName());
-            for (String spouse : spouses) {
-                for (Person possibleChild : peopleWithId.get(spouse).getChildren()) {
+            Set<String> spousesIds = idsByName.get(person.getSpouse().getFullName());
+            for (String spouseId : spousesIds) {
+                for (Person possibleChild : peopleWithID.get(spouseId).getChildren()) {
                     if (person.getChildren().contains(possibleChild)) {
                         person.resetSpouse();
-                        person.setSpouse(peopleWithId.get(spouse));
+                        person.setSpouse(peopleWithID.get(spouseId));
                         break;
                     }
                 }
-                if (person.getSpouse().getId() != null) {
+
+                if (person.getSpouse().getId() != null)
                     break;
+            }
+        }
+
+        // find spouse by siblings information
+        if (person.getSpouse() != null && person.getSpouse().getId() == null) {
+            if (person.getSpouse().getSiblingsNumber() != null && person.getSpouse().getSiblingsNumber() == 1) {
+                Set<String> spouseSiblingIds = idsByName.get(person.getSpouse().getFullName());
+                if (spouseSiblingIds.size() == 2) {
+                    for (String siblingId : spouseSiblingIds) {
+                        if (Objects.equals(person.getId(), siblingId))
+                            continue;
+                        if (peopleWithID.get(siblingId).getId() != null) {
+                            person.setSpouse(peopleWithID.get(siblingId));
+                            person.getSpouse().setSpouse(peopleWithID.get(person.getId()));
+                        }
+                    }
                 }
             }
         }
 
+        // set spouse gender
         if (person.getSpouse() != null && person.getSpouse().getGender() == null) {
-            if ((Objects.equals(person.getGender(), Gender.MALE))) {
-                person.getSpouse().setGender(Gender.FEMALE);
-            }
-            else if ((Objects.equals(person.getGender(), Gender.FEMALE))) {
-                person.getSpouse().setGender(Gender.MALE);
-            }
+            if (person.getGender() != null)
+                person.getSpouse().setGender(Gender.reverse(person.getGender()));
         }
+
 
         if (person.getChildrenNumber() == null || person.getChildrenNumber() > person.getChildren().size()) {
             if (person.getSpouse() != null) {
@@ -242,22 +246,8 @@ public class PersonRelationMerger {
                     spouseChild.addParent(person);
                 }
             }
-        }
 
-        if (person.getSpouse() != null && person.getSpouse().getId() == null) {
-            if (person.getSpouse().getSiblingsNumber() != null && person.getSpouse().getSiblingsNumber() == 1) {
-                Set<String> spouseSiblings = idsByName.get(person.getSpouse().getFullName());
-                if (spouseSiblings.size() == 2) {
-                    for (String sibling : spouseSiblings) {
-                        if (Objects.equals(person.getId(), sibling))
-                            continue;
-                        if (peopleWithId.get(sibling).getId() != null) {
-                            person.setSpouse(peopleWithId.get(sibling));
-                            person.getSpouse().setSpouse(peopleWithId.get(person.getId()));
-                        }
-                    }
-                }
-            }
+            person.setChildrenNumber(person.getChildren().size());
         }
     }
 }
