@@ -153,10 +153,6 @@ public class Person {
         }
     }
 
-    public void resetSpouse() {
-        this.spouse = null;
-    }
-
     public void setSpouse(@NonNull String name) {
         if (this.spouse != null && !Objects.equals(name, spouse.getFirstName())) {
             throw new Error("Spouse already set");
@@ -164,6 +160,10 @@ public class Person {
         Person spouse = new Person();
         spouse.setFullName(name);
         setSpouse(spouse);
+    }
+
+    public void resetSpouse() {
+        this.spouse = null;
     }
 
     public void setWife(@NonNull String id) {
@@ -186,7 +186,7 @@ public class Person {
         setGender(Gender.FEMALE);
     }
 
-    public boolean checkConsistency(@NonNull final Map<String, @NonNull Person> personById) {
+    public boolean isConsistent(@NonNull final Map<String, Person> personById) {
         return id != null && firstName != null && lastName != null && gender != null &&
                 parents.size() <= 2 && childrenNumber != null && siblingsNumber != null &&
                 children.size() == childrenNumber && siblings.size() == siblingsNumber &&
@@ -278,15 +278,35 @@ public class Person {
                 "children-number: " + childrenNumber + ", siblings-number: " + siblingsNumber;
     }
 
-    public String toStringMain() {
-        return "Person: id: " + id + "\n" +
-                "firstName: " + firstName + ", lastName: " + lastName + "\n" +
-                "gender: " + gender + "\n" +
-                "children-number: " + childrenNumber + ", siblings-number: " + siblingsNumber + "\n" +
-                "parents: " + parents.stream().toList() + "\n" +
-                "siblings: " + siblings.stream().toList() + "\n" +
-                "spouse: " + spouse + "\n" +
-                "children: " + children.stream().toList();
+    public String toStringFull() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Person: id: ").append(id).append("\n")
+                .append("firstName: ").append(firstName).append(", lastName: ").append(lastName).append("\n")
+                .append("gender: ").append(gender).append("\n")
+                .append("children-number: ").append(childrenNumber)
+                .append(", siblings-number: ").append(siblingsNumber).append("\n");
+
+        builder.append("parents: ");
+        for (Person p: parents) {
+            builder.append("id: ").append(p.id).append(" ").append(p.gender).append("; ");
+        }
+        builder.append("\n");
+
+        builder.append("siblings: ");
+        for (Person p: siblings) {
+            builder.append("id: ").append(p.id).append(" ").append(p.gender).append("; ");
+        }
+        builder.append("\n");
+
+        if (spouse != null)
+            builder.append("spouse: id: ").append(spouse.id).append(" ").append(spouse.gender).append("\n");
+
+        builder.append("children: ");
+        for (Person p: children) {
+            builder.append("id: ").append(p.id).append(" ").append(p.gender).append("; ");
+        }
+
+        return builder.toString();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package XMLTask;
 
+import lombok.NonNull;
+
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -29,6 +31,7 @@ public class ParserXML {
                 XMLEvent event = reader.nextEvent();
                 if (event.isStartElement()) {
                     StartElement startElement = event.asStartElement();
+
                     switch (startElement.getName().getLocalPart()) {
                         case "person" -> {
                             currentPerson = new Person();
@@ -38,104 +41,34 @@ public class ParserXML {
 
                             String attrFullName = getAttributeValue(startElement, "name");
                             if (attrFullName != null) currentPerson.setFullName(attrFullName);
-
-                        }
-                        case "id" -> currentPerson.setId(getValue(startElement));
-
-                        case "first", "firstname" -> currentPerson.setFirstName(getValue(startElement));
-
-                        case "surname", "family", "family-name" -> currentPerson.setLastName(getValue(startElement));
-
-                        case "children-number" ->
-                                currentPerson.setChildrenNumber(Integer.parseInt(getValue(startElement)));
-
-                        case "siblings-number" ->
-                                currentPerson.setSiblingsNumber(Integer.parseInt(getValue(startElement)));
-
-                        case "gender" -> currentPerson.setGender(getGender(startElement));
-
-                        case "siblings" -> {
-                            String[] siblingsValue = getSiblingsValue(startElement);
-                            if (siblingsValue != null) {
-                                for (String id : siblingsValue) {
-                                    currentPerson.addSibling(id);
-                                }
-                            }
                         }
 
-                        case "brother" -> {
-                            String name = getValue(startElement);
-                            currentPerson.addSibling(name, Gender.MALE);
+                        case "people" -> {
                         }
 
-                        case "sister" -> {
-                            String name = getValue(startElement);
-                            currentPerson.addSibling(name, Gender.FEMALE);
-                        }
-
-                        case "son" -> {
-                            String id = getValue(startElement);
-                            currentPerson.addChild(id, Gender.MALE);
-                        }
-
-                        case "daughter" -> {
-                            String id = getValue(startElement);
-                            currentPerson.addChild(id, Gender.FEMALE);
-                        }
-
-                        case "child" -> {
-                            String name = getValue(startElement);
-                            currentPerson.addChild(name);
-                        }
-
-                        case "parent" -> {
-                            String id = getValue(startElement);
-                            if (id != null) {
-                                currentPerson.addParent(id);
-                            }
-                        }
-
-                        case "mother" -> {
-                            String fullname = getValue(startElement);
-                            currentPerson.addParent(fullname, Gender.FEMALE);
-                        }
-
-                        case "father" -> {
-                            String fullname = getValue(startElement);
-                            currentPerson.addParent(fullname, Gender.MALE);
-                        }
-
-                        case "children", "fullname" -> {
-                        }
-
-                        case "spouce" -> {
-                            String fullname = getValue(startElement);
-                            if (fullname != null) {
-                                currentPerson.setSpouse(fullname);
-                            }
-                        }
-
-                        case "wife" -> {
-                            String id = getValue(startElement);
-                            currentPerson.setWife(id);
-                        }
-
-                        case "husband" -> {
-                            String id = getValue(startElement);
-                            currentPerson.setHusband(id);
+                        default -> {
+                            if (currentPerson != null)
+                                handle(currentPerson, startElement);
+                            else
+                                throw new IllegalStateException("Current person can not be null");
                         }
                     }
                 }
                 else if (event.isEndElement()) {
                     EndElement endElement = event.asEndElement();
-                    if (endElement.getName().getLocalPart().equals("person")) {
-                        people.add(currentPerson);
 
-                        people.addAll(currentPerson.getChildren());
-                        people.addAll(currentPerson.getParents());
-                        people.addAll(currentPerson.getSiblings());
-                        if (currentPerson.getSpouse() != null)
-                            people.add(currentPerson.getSpouse());
+                    if ("person".equals(endElement.getName().getLocalPart())) {
+                        if (currentPerson != null) {
+                            people.add(currentPerson);
+
+                            people.addAll(currentPerson.getChildren());
+                            people.addAll(currentPerson.getParents());
+                            people.addAll(currentPerson.getSiblings());
+                            if (currentPerson.getSpouse() != null)
+                                people.add(currentPerson.getSpouse());
+                        }
+                        else
+                            throw new IllegalStateException("Current person can not be null");
                     }
                 }
             }
@@ -147,7 +80,104 @@ public class ParserXML {
         return people;
     }
 
-    private String[] getSiblingsValue(final StartElement startElement) {
+    private void handle(@NonNull Person person, StartElement startElement) throws XMLStreamException {
+        switch (startElement.getName().getLocalPart()) {
+            case "id" -> person.setId(getValue(startElement));
+
+            case "first", "firstname" -> person.setFirstName(getValue(startElement));
+
+            case "surname", "family", "family-name" -> person.setLastName(getValue(startElement));
+
+            case "children-number" ->
+                    person.setChildrenNumber(tryParse(getValue(startElement)));
+
+            case "siblings-number" ->
+                    person.setSiblingsNumber(tryParse(getValue(startElement)));
+
+            case "gender" -> person.setGender(getGender(startElement));
+
+            case "siblings" -> {
+                String[] siblingsValue = getSiblingsValue(startElement);
+                if (siblingsValue != null) {
+                    for (String id : siblingsValue) {
+                        person.addSibling(id);
+                    }
+                }
+            }
+
+            case "brother" -> {
+                String name = getValue(startElement);
+                if (name != null)
+                    person.addSibling(name, Gender.MALE);
+            }
+
+            case "sister" -> {
+                String name = getValue(startElement);
+                if (name != null)
+                    person.addSibling(name, Gender.FEMALE);
+            }
+
+            case "son" -> {
+                String id = getValue(startElement);
+                if (id != null)
+                    person.addChild(id, Gender.MALE);
+            }
+
+            case "daughter" -> {
+                String id = getValue(startElement);
+                if (id != null)
+                    person.addChild(id, Gender.FEMALE);
+            }
+
+            case "child" -> {
+                String name = getValue(startElement);
+                if (name != null)
+                    person.addChild(name);
+            }
+
+            case "parent" -> {
+                String id = getValue(startElement);
+                if (id != null)
+                    person.addParent(id);
+            }
+
+            case "mother" -> {
+                String fullName = getValue(startElement);
+                if (fullName != null)
+                    person.addParent(fullName, Gender.FEMALE);
+            }
+
+            case "father" -> {
+                String fullName = getValue(startElement);
+                if (fullName != null)
+                    person.addParent(fullName, Gender.MALE);
+            }
+
+            case "spouce" -> {
+                String fullName = getValue(startElement);
+                if (fullName != null)
+                    person.setSpouse(fullName);
+            }
+
+            case "wife" -> {
+                String id = getValue(startElement);
+                if (id != null)
+                    person.setWife(id);
+            }
+
+            case "husband" -> {
+                String id = getValue(startElement);
+                if (id != null)
+                    person.setHusband(id);
+            }
+
+            case "children", "fullname" -> {
+                // contains other elements, but empty by itself
+            }
+        }
+    }
+
+    private String[] getSiblingsValue(StartElement startElement) {
         Iterator<Attribute> iterator = startElement.getAttributes();
         if (iterator.hasNext()) {
             Attribute attribute = iterator.next();
@@ -156,7 +186,11 @@ public class ParserXML {
         return null;
     }
 
-    private String getValue(final StartElement startElement) throws XMLStreamException {
+    /**
+     * Have side effects, change the state of startElement
+     * @return - value of the element
+     */
+    private String getValue(StartElement startElement) throws XMLStreamException {
         String value;
         Iterator<Attribute> iterator = startElement.getAttributes();
 
@@ -194,8 +228,8 @@ public class ParserXML {
         return !"unknown".equalsIgnoreCase(v) && !"none".equalsIgnoreCase(v);
     }
 
-    private Gender getGender(final StartElement event) throws XMLStreamException {
-        Iterator<Attribute> iterator = event.getAttributes();
+    private Gender getGender(final StartElement startElement) throws XMLStreamException {
+        Iterator<Attribute> iterator = startElement.getAttributes();
         if (iterator.hasNext()) {
             Attribute attribute = iterator.next();
             return parseGender(attribute.getValue().strip());
@@ -214,5 +248,17 @@ public class ParserXML {
             case "female", "F" -> Gender.FEMALE;
             default -> throw new IllegalArgumentException("The value is not a gender: " + gender);
         };
+    }
+
+    private int tryParse(String num) {
+        if (num != null) {
+            try {
+                return Integer.parseInt(num);
+            }
+            catch (NumberFormatException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return 0;
     }
 }
