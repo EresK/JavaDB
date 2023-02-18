@@ -1,4 +1,4 @@
-package XMLTask;
+package xml.task2;
 
 import lombok.NonNull;
 

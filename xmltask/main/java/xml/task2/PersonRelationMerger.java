@@ -1,4 +1,4 @@
-package XMLTask;
+package xml.task2;
 
 import java.util.*;
 
@@ -13,9 +13,6 @@ public class PersonRelationMerger {
         List<Person> errors = personsHandled.stream()
                 .filter(p -> !p.isConsistent(peopleWithID))
                 .toList();
-
-        System.out.println("Persons after handle relations: " + personsHandled.size() + "\n" +
-                "Errors: " + errors.size());
 
         for (Person problemPerson : errors) {
             Set<Person> peopleWithoutId = new HashSet<>();
@@ -39,9 +36,6 @@ public class PersonRelationMerger {
 
         errors = personsHandled.stream().filter(p ->
                 !p.isConsistent(peopleWithID)).toList();
-
-        System.out.println("Errors: " + errors.size() + "\n" +
-                "Persons: " + personsHandled.size());
 
         return personsHandled;
     }

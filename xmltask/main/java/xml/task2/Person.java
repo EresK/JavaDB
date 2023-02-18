@@ -1,28 +1,46 @@
-package XMLTask;
+package xml.task2;
 
+import jakarta.xml.bind.annotation.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 import java.util.*;
 import java.util.stream.Stream;
 
 @Getter
+@NoArgsConstructor
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(namespace = "xml.task.people")
 public class Person {
+    @XmlID
+    @XmlAttribute
     private String id;
+
+    @XmlElement(name = "first-name", required = true)
     private String firstName;
+
+    @XmlElement(name = "last-name", required = true)
     private String lastName;
+
+    @XmlAttribute(required = true)
     private Gender gender;
+
+    @XmlIDREF
     private Person spouse;
 
+    @XmlAttribute(name = "children-number")
     private Integer childrenNumber;
+
+    @XmlAttribute(name = "siblings-number")
     private Integer siblingsNumber;
 
+    @XmlTransient
     private final Set<Person> parents = new HashSet<>();
+    @XmlTransient
     private final Set<Person> siblings = new HashSet<>();
+    @XmlTransient
     private final Set<Person> children = new HashSet<>();
-
-    public Person() {
-    }
 
     public Person(@NonNull String id) {
         this.id = id;
@@ -33,22 +51,22 @@ public class Person {
     }
 
     public void setFirstName(@NonNull String firstName) {
-        if (this.firstName != null && !this.firstName.equals(firstName)) {
+        if ((this.firstName != null) && !this.firstName.equals(firstName)) {
             throw new Error("FirstName already set");
         }
         this.firstName = firstName;
     }
 
     public void setLastName(@NonNull String lastName) {
-        if (this.lastName != null && !this.lastName.equals(lastName)) {
-            throw new Error("Lastname already set");
+        if ((this.lastName != null) && !this.lastName.equals(lastName)) {
+            throw new Error("LastName already set");
         }
         this.lastName = lastName;
     }
 
     public String getFullName() {
-        if (firstName != null && lastName != null) {
-            return firstName + " " + lastName;
+        if ((firstName != null) && (lastName != null)) {
+            return String.format("%s %s", firstName, lastName);
         }
         return null;
     }
@@ -60,30 +78,52 @@ public class Person {
     }
 
     public void setGender(@NonNull Gender gender) {
-        if (this.gender != null && !this.gender.equals(gender)) {
+        if ((this.gender != null) && !this.gender.equals(gender)) {
             throw new Error("Gender already set");
         }
         this.gender = gender;
     }
 
     public void setChildrenNumber(int childrenNumber) {
-        if (this.childrenNumber != null && this.childrenNumber != childrenNumber) {
+        if ((this.childrenNumber != null) && (this.childrenNumber != childrenNumber)) {
             throw new Error("Children number already set");
         }
         this.childrenNumber = childrenNumber;
     }
 
     public void setSiblingsNumber(int siblingsNumber) {
-        if (this.siblingsNumber != null && this.siblingsNumber != siblingsNumber) {
+        if ((this.siblingsNumber != null) && (this.siblingsNumber != siblingsNumber)) {
             throw new Error("Siblings number already set");
         }
         this.siblingsNumber = siblingsNumber;
+    }
+
+    @XmlIDREF
+    @XmlElementWrapper(name = "parents")
+    @XmlElement(name = "parent")
+    public List<Person> getParentsList() {
+        return new ArrayList<>(parents);
+    }
+
+    @XmlIDREF
+    @XmlElementWrapper(name = "siblings")
+    @XmlElement(name = "sibling")
+    public List<Person> getSiblingsList() {
+        return new ArrayList<>(siblings);
+    }
+
+    @XmlIDREF
+    @XmlElementWrapper(name = "children")
+    @XmlElement(name = "child")
+    public List<Person> getChildrenList() {
+        return new ArrayList<>(children);
     }
 
     public void addSibling(@NonNull Person sibling) {
         if (sibling.siblingsNumber == null) {
             sibling.siblingsNumber = siblingsNumber;
         }
+
         if (siblingsNumber == null) {
             siblingsNumber = sibling.siblingsNumber;
         }
@@ -138,7 +178,7 @@ public class Person {
     }
 
     public void setSpouse(@NonNull Person spouse) {
-        if (this.spouse != null && this.spouse.getId() != null && !spouse.equals(this.spouse)) {
+        if ((this.spouse != null) && (this.spouse.getId() != null) && !spouse.equals(this.spouse)) {
             throw new Error("Spouse already set");
         }
 
@@ -148,13 +188,13 @@ public class Person {
         if (spouse.childrenNumber != null) {
             this.setChildrenNumber(spouse.childrenNumber);
         }
-        else if (this.childrenNumber != null) {
-            spouse.setChildrenNumber(this.childrenNumber);
+        else if (childrenNumber != null) {
+            spouse.setChildrenNumber(childrenNumber);
         }
     }
 
     public void setSpouse(@NonNull String name) {
-        if (this.spouse != null && !Objects.equals(name, spouse.getFirstName())) {
+        if ((spouse != null) && !Objects.equals(name, spouse.getFirstName())) {
             throw new Error("Spouse already set");
         }
         Person spouse = new Person();
@@ -163,11 +203,11 @@ public class Person {
     }
 
     public void resetSpouse() {
-        this.spouse = null;
+        spouse = null;
     }
 
     public void setWife(@NonNull String id) {
-        if (this.spouse != null && !Objects.equals(id, this.spouse.getId())) {
+        if ((spouse != null) && !Objects.equals(id, spouse.getId())) {
             throw new Error("Wife already set");
         }
         Person wife = new Person(id);
@@ -177,7 +217,7 @@ public class Person {
     }
 
     public void setHusband(@NonNull String id) {
-        if (this.spouse != null && !Objects.equals(id, this.spouse.getId())) {
+        if ((spouse != null) && !Objects.equals(id, spouse.getId())) {
             throw new Error("Husband already set");
         }
         Person husband = new Person(id);
@@ -187,52 +227,46 @@ public class Person {
     }
 
     public boolean isConsistent(@NonNull final Map<String, Person> personById) {
-        return id != null && firstName != null && lastName != null && gender != null &&
-                parents.size() <= 2 && childrenNumber != null && siblingsNumber != null &&
-                children.size() == childrenNumber && siblings.size() == siblingsNumber &&
-
+        return (id != null) && (firstName != null) && (lastName != null) && (gender != null) &&
+                (parents.size() <= 2) && (childrenNumber != null) && (siblingsNumber != null) &&
+                (children.size() == childrenNumber) && (siblings.size() == siblingsNumber) &&
                 (spouse != null || childrenNumber == 0) &&
-
                 children.stream()
                         .map(Person::getParents)
                         .allMatch(s -> Arrays.asList(s.toArray()).contains(this)) &&
-
                 parents.stream()
                         .map(Person::getChildren)
                         .allMatch(s -> Arrays.asList(s.toArray()).contains(this)) &&
-
                 siblings.stream()
                         .map(Person::getSiblings)
                         .allMatch(s -> Arrays.asList(s.toArray()).contains(this)) &&
-
-                Stream.concat(
-                        Stream.of(children, siblings, parents)
+                Stream.concat(Stream.of(children, siblings, parents)
                                 .flatMap(Collection::stream),
-                        Stream.ofNullable(spouse)
-                ).allMatch(p -> p.id != null && personById.get(p.id) == p);
+                        Stream.ofNullable(spouse))
+                        .allMatch(p -> p.id != null && personById.get(p.id) == p);
     }
 
     public void lightMerge(@NonNull Person person) {
-        if (this.id == null || person.id == null || !this.id.equals(person.id)) {
+        if ((id == null) || (person.id == null) || !id.equals(person.id)) {
             System.err.println(this);
             System.err.println(person);
             throw new IllegalStateException("Incorrect id");
         }
 
         if (person.firstName != null)
-            this.setFirstName(person.firstName);
+            setFirstName(person.firstName);
 
         if (person.lastName != null)
-            this.setLastName(person.lastName);
+            setLastName(person.lastName);
 
         if (person.gender != null)
-            this.setGender(person.gender);
+            setGender(person.gender);
 
         if (person.childrenNumber != null)
-            this.setChildrenNumber(person.childrenNumber);
+            setChildrenNumber(person.childrenNumber);
 
         if (person.siblingsNumber != null)
-            this.setSiblingsNumber(person.siblingsNumber);
+            setSiblingsNumber(person.siblingsNumber);
     }
 
     public void mergePerson(@NonNull Person person) {
@@ -265,52 +299,54 @@ public class Person {
 
     @Override
     public String toString() {
-        return "Person: id: " + id + "\n" +
-                "firstName: " + firstName + ", lastName: " + lastName + "\n" +
-                "gender: " + gender + "\n" +
-                "children-number: " + childrenNumber + ", siblings-number: " + siblingsNumber;
+        return String.format("Person: id: %s%n" +
+                        "firstName: %s, lastName: %s%n" +
+                        "gender: %s%n" +
+                        "children: %d, siblings: %d",
+                id, firstName, lastName, gender, childrenNumber, siblingsNumber);
     }
 
     public String toStringFull() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Person: id: ").append(id).append("\n")
-                .append("firstName: ").append(firstName).append(", lastName: ").append(lastName).append("\n")
-                .append("gender: ").append(gender).append("\n")
-                .append("children-number: ").append(childrenNumber)
-                .append(", siblings-number: ").append(siblingsNumber).append("\n");
+        StringBuilder builder = new StringBuilder(String.format("%s%n", this));
 
         builder.append("parents: ");
-        for (Person p: parents) {
-            builder.append("id: ").append(p.id).append(" ").append(p.gender).append("; ");
+        for (Person p : parents) {
+            builder.append(String.format("id: %s %s; ", p.id, p.gender));
         }
         builder.append("\n");
 
         builder.append("siblings: ");
-        for (Person p: siblings) {
-            builder.append("id: ").append(p.id).append(" ").append(p.gender).append("; ");
+        for (Person p : siblings) {
+            builder.append(String.format("id: %s %s; ", p.id, p.gender));
         }
         builder.append("\n");
 
         if (spouse != null)
-            builder.append("spouse: id: ").append(spouse.id).append(" ").append(spouse.gender).append("\n");
+            builder.append(String.format("spouse: id: %s %s%n", spouse.id, spouse.gender));
 
         builder.append("children: ");
-        for (Person p: children) {
-            builder.append("id: ").append(p.id).append(" ").append(p.gender).append("; ");
+        for (Person p : children) {
+            builder.append(String.format("id: %s %s; ", p.id, p.gender));
         }
 
         return builder.toString();
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Person person = (Person) o;
-        if (this.id != null && person.id != null && this.id.equals(person.id))
+    public boolean equals(Object obj) {
+        if (this == obj)
             return true;
 
-        return this.getFullName() != null && person.getFullName() != null && this.getFullName().equals(person.getFullName());
+        if ((obj == null) || (getClass() != obj.getClass()))
+            return false;
+
+        Person person = (Person) obj;
+        if ((id != null) && (person.id != null) && (id.equals(person.id)))
+            return true;
+
+        return (getFullName() != null) &&
+                (person.getFullName() != null) &&
+                getFullName().equals(person.getFullName());
     }
 
     @Override
