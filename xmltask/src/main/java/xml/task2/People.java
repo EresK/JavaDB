@@ -1,6 +1,7 @@
 package xml.task2;
 
-import jakarta.xml.bind.annotation.*;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;

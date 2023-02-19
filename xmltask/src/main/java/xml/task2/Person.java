@@ -2,17 +2,37 @@ package xml.task2;
 
 import jakarta.xml.bind.annotation.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
 
 import java.util.*;
 import java.util.stream.Stream;
 
 @Getter
-@NoArgsConstructor
+@Setter
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(namespace = "xml.task.people")
 public class Person {
+
+    public Person() {
+        parents = new HashSet<>();
+
+        brothers = new HashSet<>();
+        sisters = new HashSet<>();
+        siblings = new HashSet<>();
+
+        sons = new HashSet<>();
+        daughters = new HashSet<>();
+        children = new HashSet<>();
+    }
+
+    public Person(@NonNull String id) {
+        this();
+        this.id = id;
+    }
+
+    /* FIELDS */
+
     @XmlID
     @XmlAttribute
     private String id;
@@ -26,25 +46,60 @@ public class Person {
     @XmlAttribute(required = true)
     private Gender gender;
 
-    @XmlIDREF
-    private Person spouse;
-
     @XmlAttribute(name = "children-number")
     private Integer childrenNumber;
 
     @XmlAttribute(name = "siblings-number")
     private Integer siblingsNumber;
 
-    @XmlTransient
-    private final Set<Person> parents = new HashSet<>();
-    @XmlTransient
-    private final Set<Person> siblings = new HashSet<>();
-    @XmlTransient
-    private final Set<Person> children = new HashSet<>();
+    @XmlIDREF
+    private Person father;
 
-    public Person(@NonNull String id) {
-        this.id = id;
+    @XmlIDREF
+    private Person mother;
+
+    @XmlTransient
+    private final Set<Person> parents;
+
+    @XmlIDREF
+    private Person spouse;
+
+    @XmlElementWrapper(name = "brothers")
+    @XmlElement(name = "brother")
+    @XmlIDREF
+    private final Set<Person> brothers;
+
+    @XmlElementWrapper(name = "sisters")
+    @XmlElement(name = "sister")
+    @XmlIDREF
+    private final Set<Person> sisters;
+
+    @XmlTransient
+    private final Set<Person> siblings;
+
+    @XmlElementWrapper(name = "sons")
+    @XmlElement(name = "son")
+    @XmlIDREF
+    private final Set<Person> sons;
+
+    @XmlElementWrapper(name = "daughters")
+    @XmlElement(name = "daughter")
+    @XmlIDREF
+    private final Set<Person> daughters;
+
+    @XmlTransient
+    private final Set<Person> children;
+
+    /* GETTERS */
+
+    public String getFullName() {
+        if ((firstName != null) && (lastName != null)) {
+            return String.format("%s %s", firstName, lastName);
+        }
+        return null;
     }
+
+    /* SETTERS */
 
     public void setId(@NonNull String id) {
         this.id = id;
@@ -62,13 +117,6 @@ public class Person {
             throw new Error("LastName already set");
         }
         this.lastName = lastName;
-    }
-
-    public String getFullName() {
-        if ((firstName != null) && (lastName != null)) {
-            return String.format("%s %s", firstName, lastName);
-        }
-        return null;
     }
 
     public void setFullName(@NonNull String fullName) {
@@ -98,26 +146,56 @@ public class Person {
         this.siblingsNumber = siblingsNumber;
     }
 
-    @XmlIDREF
-    @XmlElementWrapper(name = "parents")
-    @XmlElement(name = "parent")
-    public List<Person> getParentsList() {
-        return new ArrayList<>(parents);
+    public void setSpouse(@NonNull Person spouse) {
+        if ((this.spouse != null) && (this.spouse.getId() != null) && !spouse.equals(this.spouse)) {
+            throw new Error("Spouse already set");
+        }
+
+        this.spouse = spouse;
+        spouse.spouse = this;
+
+        if (spouse.childrenNumber != null) {
+            this.setChildrenNumber(spouse.childrenNumber);
+        }
+        else if (childrenNumber != null) {
+            spouse.setChildrenNumber(childrenNumber);
+        }
     }
 
-    @XmlIDREF
-    @XmlElementWrapper(name = "siblings")
-    @XmlElement(name = "sibling")
-    public List<Person> getSiblingsList() {
-        return new ArrayList<>(siblings);
+    public void setSpouse(@NonNull String name) {
+        if ((spouse != null) && !Objects.equals(name, spouse.getFirstName())) {
+            throw new Error("Spouse already set");
+        }
+        Person spouse = new Person();
+        spouse.setFullName(name);
+        setSpouse(spouse);
     }
 
-    @XmlIDREF
-    @XmlElementWrapper(name = "children")
-    @XmlElement(name = "child")
-    public List<Person> getChildrenList() {
-        return new ArrayList<>(children);
+    public void setWife(@NonNull String id) {
+        if ((spouse != null) && !Objects.equals(id, spouse.getId())) {
+            throw new Error("Wife already set");
+        }
+        Person wife = new Person(id);
+        wife.setGender(Gender.FEMALE);
+        setSpouse(wife);
+        setGender(Gender.MALE);
     }
+
+    public void setHusband(@NonNull String id) {
+        if ((spouse != null) && !Objects.equals(id, spouse.getId())) {
+            throw new Error("Husband already set");
+        }
+        Person husband = new Person(id);
+        husband.setGender(Gender.MALE);
+        setSpouse(husband);
+        setGender(Gender.FEMALE);
+    }
+
+    public void resetSpouse() {
+        spouse = null;
+    }
+
+    /* METHODS */
 
     public void addSibling(@NonNull Person sibling) {
         if (sibling.siblingsNumber == null) {
@@ -175,55 +253,6 @@ public class Person {
         parent.setFullName(fullName);
         parent.setGender(gender);
         addParent(parent);
-    }
-
-    public void setSpouse(@NonNull Person spouse) {
-        if ((this.spouse != null) && (this.spouse.getId() != null) && !spouse.equals(this.spouse)) {
-            throw new Error("Spouse already set");
-        }
-
-        this.spouse = spouse;
-        spouse.spouse = this;
-
-        if (spouse.childrenNumber != null) {
-            this.setChildrenNumber(spouse.childrenNumber);
-        }
-        else if (childrenNumber != null) {
-            spouse.setChildrenNumber(childrenNumber);
-        }
-    }
-
-    public void setSpouse(@NonNull String name) {
-        if ((spouse != null) && !Objects.equals(name, spouse.getFirstName())) {
-            throw new Error("Spouse already set");
-        }
-        Person spouse = new Person();
-        spouse.setFullName(name);
-        setSpouse(spouse);
-    }
-
-    public void resetSpouse() {
-        spouse = null;
-    }
-
-    public void setWife(@NonNull String id) {
-        if ((spouse != null) && !Objects.equals(id, spouse.getId())) {
-            throw new Error("Wife already set");
-        }
-        Person wife = new Person(id);
-        wife.setGender(Gender.FEMALE);
-        setSpouse(wife);
-        setGender(Gender.MALE);
-    }
-
-    public void setHusband(@NonNull String id) {
-        if ((spouse != null) && !Objects.equals(id, spouse.getId())) {
-            throw new Error("Husband already set");
-        }
-        Person husband = new Person(id);
-        husband.setGender(Gender.MALE);
-        setSpouse(husband);
-        setGender(Gender.FEMALE);
     }
 
     public boolean isConsistent(@NonNull final Map<String, Person> personById) {
@@ -304,32 +333,6 @@ public class Person {
                         "gender: %s%n" +
                         "children: %d, siblings: %d",
                 id, firstName, lastName, gender, childrenNumber, siblingsNumber);
-    }
-
-    public String toStringFull() {
-        StringBuilder builder = new StringBuilder(String.format("%s%n", this));
-
-        builder.append("parents: ");
-        for (Person p : parents) {
-            builder.append(String.format("id: %s %s; ", p.id, p.gender));
-        }
-        builder.append("\n");
-
-        builder.append("siblings: ");
-        for (Person p : siblings) {
-            builder.append(String.format("id: %s %s; ", p.id, p.gender));
-        }
-        builder.append("\n");
-
-        if (spouse != null)
-            builder.append(String.format("spouse: id: %s %s%n", spouse.id, spouse.gender));
-
-        builder.append("children: ");
-        for (Person p : children) {
-            builder.append(String.format("id: %s %s; ", p.id, p.gender));
-        }
-
-        return builder.toString();
     }
 
     @Override

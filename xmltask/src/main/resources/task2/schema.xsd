@@ -36,15 +36,47 @@
     <!--  Person  -->
 
     <xsd:complexType name="person">
-        <xsd:all minOccurs="1">
+        <xsd:all>
             <xsd:element name="first-name" type="xsd:string"/>
             <xsd:element name="last-name" type="xsd:string"/>
 
+            <xsd:element name="father" type="xsd:IDREF" minOccurs="0"/>
+            <xsd:element name="mother" type="xsd:IDREF" minOccurs="0"/>
             <xsd:element name="spouse" type="xsd:IDREF" minOccurs="0"/>
-            <xsd:element name="parents" type="per:parents" minOccurs="0"/>
-            <xsd:element name="siblings" type="per:siblings" minOccurs="0"/>
-            <xsd:element name="children" type="per:children" minOccurs="0"/>
+
+            <xsd:element name="brothers">
+                <xsd:complexType>
+                    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                        <xsd:element name="brother" type="xsd:IDREF"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="sisters">
+                <xsd:complexType>
+                    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                        <xsd:element name="sister" type="xsd:IDREF"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="sons">
+                <xsd:complexType>
+                    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                        <xsd:element name="son" type="xsd:IDREF"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="daughters">
+                <xsd:complexType>
+                    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                        <xsd:element name="daughter" type="xsd:IDREF"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
         </xsd:all>
+
         <xsd:attribute name="id" type="xsd:ID" use="required"/>
         <xsd:attribute name="gender" type="per:gender-type" use="required"/>
         <xsd:attribute name="children-number" type="xsd:nonNegativeInteger"/>

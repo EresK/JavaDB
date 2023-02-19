@@ -34,10 +34,34 @@ public class PersonRelationMerger {
             }
         }
 
-        errors = personsHandled.stream().filter(p ->
-                !p.isConsistent(peopleWithID)).toList();
+        clarification(personsHandled);
 
         return personsHandled;
+    }
+
+    private void clarification(List<Person> people) {
+        for (Person p: people) {
+            for (Person parent: p.getParents()) {
+                if (parent.getGender() == Gender.MALE)
+                    p.setFather(parent);
+                else
+                    p.setMother(parent);
+            }
+
+            for (Person sibling: p.getSiblings()) {
+                if (sibling.getGender() == Gender.MALE)
+                    p.getBrothers().add(sibling);
+                else
+                    p.getSisters().add(sibling);
+            }
+
+            for (Person child: p.getChildren()) {
+                if (child.getGender() == Gender.MALE)
+                    p.getSons().add(child);
+                else
+                    p.getDaughters().add(child);
+            }
+        }
     }
 
     private List<Person> handleRelations(List<Person> people) {
