@@ -1,4 +1,4 @@
-package edu.javadb.flightsspring;
+package edu.javadb.flightsspring.controllertest;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

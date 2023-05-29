@@ -1,19 +1,19 @@
 package edu.javadb.flightsspring.controller.util;
 
-public enum BoundEnum {
+public enum Bound {
     INBOUND("INBOUND"),
     OUTBOUND("OUTBOUND");
 
     private final String bound;
 
-    BoundEnum(String bound) {
+    Bound(String bound) {
         this.bound = bound;
     }
 
-    public static BoundEnum build(String bound) {
+    public static Bound build(String bound) {
         return switch (bound.toUpperCase()) {
-            case "INBOUND" -> BoundEnum.INBOUND;
-            case "OUTBOUND" -> BoundEnum.OUTBOUND;
+            case "INBOUND" -> Bound.INBOUND;
+            case "OUTBOUND" -> Bound.OUTBOUND;
             default -> throw new IllegalArgumentException("Only INBOUND and OUTBOUND allow for schedule");
         };
     }
