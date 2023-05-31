@@ -1,4 +1,4 @@
-package edu.javadb.flightsspring.controller.util;
+package edu.javadb.flightsspring.util;
 
 public class DaysOfWeek {
     private static final String[] DAYS_RU = {"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресение"};
@@ -10,7 +10,7 @@ public class DaysOfWeek {
         this.locale = locale;
     }
 
-    public String numToDay(int num) {
+    public String getDay(int num) {
         if (num < 1 || num > 7)
             throw new IllegalArgumentException("Only number from 1 to 7 is possible");
 

@@ -1,15 +1,18 @@
 package edu.javadb.flightsspring.controller;
 
+import edu.javadb.flightsspring.controller.response.Bound;
 import edu.javadb.flightsspring.controller.response.FlightResponse;
-import edu.javadb.flightsspring.controller.util.Bound;
-import edu.javadb.flightsspring.controller.util.DaysOfWeek;
-import edu.javadb.flightsspring.controller.util.Locale;
+import edu.javadb.flightsspring.controller.response.InboundFlightResponse;
+import edu.javadb.flightsspring.controller.response.OutboundFlightResponse;
+import edu.javadb.flightsspring.util.DaysOfWeek;
+import edu.javadb.flightsspring.util.Locale;
 import edu.javadb.flightsspring.domain.AirportEntity;
 import edu.javadb.flightsspring.domain.FlightEntity;
 import edu.javadb.flightsspring.domain.RouteEntity;
 import edu.javadb.flightsspring.repos.AirportsRepository;
 import edu.javadb.flightsspring.repos.FlightsRepository;
 import edu.javadb.flightsspring.repos.RoutesRepository;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,11 +46,13 @@ public class AirportsController {
     }
 
     @GetMapping(params = {"!city"})
+    @Transactional
     public List<FlightResponse> airportsSchedule(Pageable pageable,
                                                  @RequestParam(name = "bound") String bound,
-                                                 @RequestParam(name = "airport_code") String airportCode) {
+                                                 @RequestParam(name = "airport_code") String airportCode,
+                                                 @RequestParam(name = "locale", required = false) String locale) {
         Bound boundEnum = Bound.build(bound);
-        DaysOfWeek daysOfWeek = new DaysOfWeek(Locale.RU);
+        DaysOfWeek daysOfWeek = new DaysOfWeek(Locale.getLocaleOrDefault(locale));
         final String statusScheduled = "Scheduled";
 
         List<RouteEntity> routes = null;
@@ -74,14 +79,24 @@ public class AirportsController {
             if (fRoute.isEmpty())
                 throw new IllegalStateException("No route is found for flight no: " + f.getFlightNo());
 
-            var days = Arrays.stream(fRoute.get().getDaysOfWeek()).mapToObj(daysOfWeek::numToDay).toList().toArray(new String[]{});
+            var days = Arrays.stream(fRoute.get().getDaysOfWeek()).mapToObj(daysOfWeek::getDay).toList().toArray(new String[]{});
 
-            FlightResponse response = new FlightResponse(
-                    f.getFlightNo(),
-                    f.getDepartureAirport(), f.getDepartureAirportName(),
-                    f.getArrivalAirport(), f.getArrivalAirportName(),
-                    f.getScheduledDeparture(), f.getScheduledArrival(),
-                    days);
+            FlightResponse response = switch (boundEnum) {
+                case INBOUND -> new InboundFlightResponse(
+                        f.getDepartureAirport(),
+                        f.getDepartureAirportName(),
+                        f.getDepartureCity(),
+                        f.getScheduledArrival(),
+                        f.getFlightNo(),
+                        days);
+                case OUTBOUND -> new OutboundFlightResponse(
+                        f.getArrivalAirport(),
+                        f.getArrivalAirportName(),
+                        f.getArrivalCity(),
+                        f.getScheduledDeparture(),
+                        f.getFlightNo(),
+                        days);
+            };
 
             flightsResponse.add(response);
         }
