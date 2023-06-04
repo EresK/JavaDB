@@ -12,5 +12,7 @@ public interface FlightsRepository extends JpaRepository<FlightEntity, Long> {
 
     List<FlightEntity> findAllByDepartureAirportAndStatus(String departureAirport, String status, Pageable pageable);
 
+    List<FlightEntity> findAllByStatus(String status);
+
     Page<FlightEntity> findAll(Pageable pageable);
 }

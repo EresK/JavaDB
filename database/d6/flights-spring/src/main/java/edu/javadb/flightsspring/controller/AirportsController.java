@@ -1,20 +1,15 @@
 package edu.javadb.flightsspring.controller;
 
-import edu.javadb.flightsspring.controller.response.Bound;
-import edu.javadb.flightsspring.controller.response.FlightResponse;
-import edu.javadb.flightsspring.controller.response.InboundFlightResponse;
-import edu.javadb.flightsspring.controller.response.OutboundFlightResponse;
-import edu.javadb.flightsspring.util.DaysOfWeek;
-import edu.javadb.flightsspring.util.Locale;
-import edu.javadb.flightsspring.domain.AirportEntity;
+import edu.javadb.flightsspring.controller.response.*;
 import edu.javadb.flightsspring.domain.FlightEntity;
 import edu.javadb.flightsspring.domain.RouteEntity;
 import edu.javadb.flightsspring.repos.AirportsRepository;
 import edu.javadb.flightsspring.repos.FlightsRepository;
 import edu.javadb.flightsspring.repos.RoutesRepository;
+import edu.javadb.flightsspring.util.DaysOfWeek;
+import edu.javadb.flightsspring.util.Locale;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,14 +30,32 @@ public class AirportsController {
     private final FlightsRepository flightsRepository;
 
     @GetMapping("/all")
-    public Page<AirportEntity> airports(Pageable pageable) {
-        return airportsRepository.findAll(pageable);
+    public List<AirportResponse> airports(Pageable pageable,
+                                          @RequestParam(name = "locale", required = false) String locale) {
+        Locale localeEnum = Locale.getLocaleOrDefault(locale);
+
+        return airportsRepository.findAll(pageable).stream()
+                .map(anEntity -> AirportResponse.fromEntity(anEntity, localeEnum))
+                .toList();
     }
 
     @GetMapping(params = {"!bound", "!airport_code"})
-    public List<AirportEntity> airportsWithinACity(@RequestParam(name = "city") String city) {
+    public List<AirportResponse> airportsWithinACity(@RequestParam(name = "city") String city,
+                                                     @RequestParam(name = "locale", required = false) String locale) {
+        Locale localeEnum = Locale.getLocaleOrDefault(locale);
+
         var airports = airportsRepository.findAll();
-        return airports.stream().filter(airportEntity -> city.equalsIgnoreCase(airportEntity.getCity())).toList();
+
+        return switch (localeEnum) {
+            case RU -> airports.stream()
+                    .filter(a -> city.equalsIgnoreCase(a.getCity().getRu()))
+                    .map(anEntity -> AirportResponse.fromEntity(anEntity, localeEnum))
+                    .toList();
+            case EN -> airports.stream()
+                    .filter(a -> city.equalsIgnoreCase(a.getCity().getEn()))
+                    .map(anEntity -> AirportResponse.fromEntity(anEntity, localeEnum))
+                    .toList();
+        };
     }
 
     @GetMapping(params = {"!city"})
