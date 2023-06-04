@@ -60,10 +60,10 @@ public class AirportsController {
 
     @GetMapping(params = {"!city"})
     @Transactional
-    public List<FlightResponse> airportsSchedule(Pageable pageable,
-                                                 @RequestParam(name = "bound") String bound,
-                                                 @RequestParam(name = "airport_code") String airportCode,
-                                                 @RequestParam(name = "locale", required = false) String locale) {
+    public List<AbstractFlightResponse> airportsSchedule(Pageable pageable,
+                                                         @RequestParam(name = "bound") String bound,
+                                                         @RequestParam(name = "airport_code") String airportCode,
+                                                         @RequestParam(name = "locale", required = false) String locale) {
         Bound boundEnum = Bound.build(bound);
         DaysOfWeek daysOfWeek = new DaysOfWeek(Locale.getLocaleOrDefault(locale));
         final String statusScheduled = "Scheduled";
@@ -82,7 +82,7 @@ public class AirportsController {
             }
         }
 
-        var flightsResponse = new ArrayList<FlightResponse>();
+        var flightsResponse = new ArrayList<AbstractFlightResponse>();
 
         for (var f : flights) {
             Optional<RouteEntity> fRoute = routes.stream()
@@ -94,7 +94,7 @@ public class AirportsController {
 
             var days = Arrays.stream(fRoute.get().getDaysOfWeek()).mapToObj(daysOfWeek::getDay).toList().toArray(new String[]{});
 
-            FlightResponse response = switch (boundEnum) {
+            AbstractFlightResponse response = switch (boundEnum) {
                 case INBOUND -> new InboundFlightResponse(
                         f.getDepartureAirport(),
                         f.getDepartureAirportName(),

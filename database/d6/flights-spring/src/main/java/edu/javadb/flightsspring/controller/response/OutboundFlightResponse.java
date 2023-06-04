@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 
 @Getter
 @Setter
-public class OutboundFlightResponse extends FlightResponse {
+public class OutboundFlightResponse extends AbstractFlightResponse {
     private String destinationAirport;
     private String destinationAirportName;
     private String destinationCity;
