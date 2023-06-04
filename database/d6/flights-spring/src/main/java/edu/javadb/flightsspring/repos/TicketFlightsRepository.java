@@ -2,7 +2,14 @@ package edu.javadb.flightsspring.repos;
 
 import edu.javadb.flightsspring.domain.TicketFlightEntity;
 import edu.javadb.flightsspring.domain.TicketFlightKey;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TicketFlightsRepository extends PagingAndSortingRepository<TicketFlightEntity, TicketFlightKey> {
+import java.util.List;
+
+public interface TicketFlightsRepository extends JpaRepository<TicketFlightEntity, TicketFlightKey> {
+    Page<TicketFlightEntity> findAllBy(Pageable pageable);
+
+    List<TicketFlightEntity> findAllByFareConditions(String fareConditions);
 }

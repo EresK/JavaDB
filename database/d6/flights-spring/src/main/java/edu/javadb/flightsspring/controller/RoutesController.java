@@ -4,6 +4,7 @@ import edu.javadb.flightsspring.controller.response.FlightResponse;
 import edu.javadb.flightsspring.domain.AirportEntity;
 import edu.javadb.flightsspring.repos.AirportsRepository;
 import edu.javadb.flightsspring.service.RoutesService;
+import edu.javadb.flightsspring.service.util.FareConditions;
 import edu.javadb.flightsspring.service.util.LocaleJson;
 import edu.javadb.flightsspring.util.Locale;
 import lombok.AllArgsConstructor;
@@ -41,14 +42,19 @@ public class RoutesController {
     public Set<List<FlightResponse>> routes(@RequestParam(name = "departure") String departureAirport,
                                             @RequestParam(name = "arrival") String arrivalAirport,
                                             @RequestParam(name = "date") String date,
-                                            @RequestParam(name = "booking_class", required = false) String fareConditions,
+                                            @RequestParam(name = "fare_conditions", required = false) String fareConditions,
                                             @RequestParam(name = "additional_routes", required = false) Integer additionalRoutes) {
         OffsetDateTime dateTime = OffsetDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss VV"));
+        FareConditions fareConditionEnum = (fareConditions == null) ? null : FareConditions.getFareCondition(fareConditions);
 
         if (additionalRoutes != null && additionalRoutes < 0)
             throw new IllegalArgumentException("If additional_routes param is present it can not be less than 0");
 
-        var foundRoutes = routesService.findAllRoutes(departureAirport, arrivalAirport, dateTime, additionalRoutes);
+        var foundRoutes = routesService.findAllRoutes(departureAirport,
+                arrivalAirport,
+                dateTime,
+                fareConditionEnum,
+                additionalRoutes);
 
         Set<List<FlightResponse>> responseRoutes = new HashSet<>();
 
