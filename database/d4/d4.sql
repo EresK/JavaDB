@@ -70,6 +70,13 @@ create table total_amount as (
 	order by f.flight_no desc, f.seat_no asc
 );
 
+create table grouped_amount as (
+	select flight_no, fare_conditions, avg(amount)::numeric(10,2) as amount, count(seat_no) as seat_count
+	from total_amount
+	group by flight_no, fare_conditions, amount
+	order by flight_no desc
+);
+
 drop table routes_with_seats, routes_seats_amount, partial_amount, partial_zero, partial_nonzero, restored_amount, full_amount;
 
 select * from total_amount;
