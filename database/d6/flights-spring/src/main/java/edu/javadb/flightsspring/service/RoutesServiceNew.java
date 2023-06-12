@@ -1,35 +1,40 @@
 package edu.javadb.flightsspring.service;
 
+import edu.javadb.flightsspring.controller.response.FlightResponse;
 import edu.javadb.flightsspring.domain.FlightEntity;
+import edu.javadb.flightsspring.domain.GroupedAmountEntity;
+import edu.javadb.flightsspring.domain.TicketFlightEntity;
 import edu.javadb.flightsspring.repos.FlightsRepository;
+import edu.javadb.flightsspring.repos.GroupedAmountRepository;
+import edu.javadb.flightsspring.repos.TicketFlightsRepository;
 import edu.javadb.flightsspring.service.util.FareConditions;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @AllArgsConstructor
 @Service
 public class RoutesServiceNew {
     private final FlightsRepository flightsRepository;
+    private final TicketFlightsRepository ticketFlightsRepository;
+    private final GroupedAmountRepository groupedAmountRepository;
 
     @Transactional
-    public Set<List<FlightEntity>> findRoutes(String departureAirport,
-                                              String arrivalAirport,
-                                              OffsetDateTime departureDate,
-                                              FareConditions fareCondition,
-                                              int maxConnections) {
+    public Set<List<FlightResponse>> findRoutes(String departureAirport,
+                                                String arrivalAirport,
+                                                OffsetDateTime departureDate,
+                                                FareConditions fareCondition,
+                                                int maxConnections) {
         if (maxConnections < 1)
             throw new IllegalArgumentException("Max connections must be positive number");
 
         var flights = flightsRepository.findAllByStatusAndScheduledDepartureBetween("Scheduled", departureDate, departureDate.plusMonths(1));
 
-        System.out.println("Flights size " + flights.size());
+//        System.out.println("Flights size " + flights.size());
 
         Set<List<FlightEntity>> foundRoutes = new HashSet<>();
 
@@ -39,7 +44,112 @@ public class RoutesServiceNew {
                 flights, new ArrayList<>(),
                 new HashSet<>(), foundRoutes);
 
-        return foundRoutes;
+        return filterByFareCondition(foundRoutes, fareCondition);
+    }
+
+    private Set<List<FlightResponse>> convertToFlightResponse(Set<List<FlightEntity>> foundRoutes,
+                                                              FareConditions fareCondition,
+                                                              List<GroupedAmountEntity> groupedAmount) {
+        Set<List<FlightResponse>> responseRoutes = new HashSet<>();
+
+        for (var route : foundRoutes) {
+            var aNewRoute = new ArrayList<FlightResponse>();
+
+            for (var flight : route) {
+                Optional<GroupedAmountEntity> flightGroupAmount = groupedAmount
+                        .stream()
+                        .filter(ga ->
+                                ga.getFlightNo().equalsIgnoreCase(flight.getFlightNo()) &&
+                                        ga.getFareConditions().equalsIgnoreCase(fareCondition.toString()))
+                        .findFirst();
+
+                if (flightGroupAmount.isEmpty())
+                    throw new IllegalStateException("Flight group amount not found for flight with id " + flight.getFlightId());
+
+                aNewRoute.add(FlightResponse.fromEntity(flight,
+                        fareCondition.toString(),
+                        flightGroupAmount.get().getAmount()));
+            }
+            responseRoutes.add(aNewRoute);
+        }
+        return responseRoutes;
+    }
+
+    private Set<List<FlightResponse>> filterByFareCondition(Set<List<FlightEntity>> foundRoutes, FareConditions fareCondition) {
+        List<Integer> listOfFlightIds = foundRoutes
+                .stream()
+                .map(r -> r
+                        .stream()
+                        .map(FlightEntity::getFlightId)
+                        .distinct()
+                        .toList())
+                .flatMap(List::stream)
+                .distinct()
+                .toList();
+
+        List<String> listOfFlightNos = foundRoutes
+                .stream()
+                .map(r -> r
+                        .stream()
+                        .map(FlightEntity::getFlightNo)
+                        .distinct()
+                        .toList())
+                .flatMap(List::stream)
+                .distinct()
+                .toList();
+
+        var groupedAmount = groupedAmountRepository.findAllByGroupedAmountKeyFlightNoIn(listOfFlightNos);
+        var ticketFlights = ticketFlightsRepository.findAllByTicketFlightKeyFlightIdIn(listOfFlightIds);
+
+//        System.out.println("Routes count before " + foundRoutes.size());
+
+        foundRoutes.removeIf(r -> !hasSeatWithFareCondition(fareCondition, r, groupedAmount, ticketFlights));
+
+//        System.out.println("Routes count after " + foundRoutes.size());
+
+        return convertToFlightResponse(foundRoutes, fareCondition, groupedAmount);
+    }
+
+    private boolean hasSeatWithFareCondition(FareConditions fareCondition,
+                                             List<FlightEntity> route,
+                                             List<GroupedAmountEntity> groupedAmount,
+                                             List<TicketFlightEntity> ticketFlights) {
+        boolean hasSeats = true;
+
+        for (var flight : route) {
+            Optional<GroupedAmountEntity> flightGroupAmount = groupedAmount
+                    .stream()
+                    .filter(ga ->
+                            ga.getFlightNo().equalsIgnoreCase(flight.getFlightNo()) &&
+                                    ga.getFareConditions().equalsIgnoreCase(fareCondition.toString()))
+                    .findFirst();
+
+            // It's normal when a flight has no business or comfort class
+            if (flightGroupAmount.isEmpty()) {
+                hasSeats = false;
+                break;
+            }
+
+            // It's looks like that it is a special flight
+            if (flightGroupAmount.get().getAmount().compareTo(BigDecimal.valueOf(1L)) < 0) {
+                hasSeats = false;
+                break;
+            }
+
+            long issuedSeatsCount = ticketFlights
+                    .stream()
+                    .filter(tf ->
+                            tf.getFlightId().equals(flight.getFlightId()) &&
+                                    tf.getFareConditions().equalsIgnoreCase(fareCondition.toString()))
+                    .count();
+
+            if (issuedSeatsCount >= flightGroupAmount.get().getSeatCount()) {
+                hasSeats = false;
+                break;
+            }
+        }
+
+        return hasSeats;
     }
 
     private void dfs(final String currentAirport,

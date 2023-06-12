@@ -1,8 +1,5 @@
 package edu.javadb.flightsspring.service.util;
 
-import lombok.Getter;
-
-@Getter
 public enum FareConditions {
     ECONOMY("ECONOMY"),
     COMFORT("COMFORT"),

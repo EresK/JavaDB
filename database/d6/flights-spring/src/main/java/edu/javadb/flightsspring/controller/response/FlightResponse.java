@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
@@ -31,7 +32,10 @@ public class FlightResponse {
 
     private String aircraftCode;
 
-    public static FlightResponse fromEntity(FlightEntity entity) {
+    private String fareConditions;
+    private BigDecimal amount;
+
+    public static FlightResponse fromEntity(FlightEntity entity, String fareConditions, BigDecimal amount) {
         FlightResponse response = new FlightResponse();
 
         response.setFlightId(entity.getFlightId());
@@ -52,6 +56,9 @@ public class FlightResponse {
         response.setArrivalCity(entity.getArrivalCity());
 
         response.setAircraftCode(entity.getAircraftCode());
+
+        response.setFareConditions(fareConditions);
+        response.setAmount(amount);
 
         return response;
     }

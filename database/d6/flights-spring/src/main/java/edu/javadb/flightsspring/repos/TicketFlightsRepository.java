@@ -12,4 +12,6 @@ public interface TicketFlightsRepository extends JpaRepository<TicketFlightEntit
     Page<TicketFlightEntity> findAllBy(Pageable pageable);
 
     List<TicketFlightEntity> findAllByFareConditions(String fareConditions);
+
+    List<TicketFlightEntity> findAllByTicketFlightKeyFlightIdIn(List<Integer> flightIds);
 }
